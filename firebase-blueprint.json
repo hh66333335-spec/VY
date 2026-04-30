@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Core user metadata and preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "status": { "type": "string", "enum": ["online", "away", "offline"] },
+        "bio": { "type": "string" },
+        "contacts": { "type": "array" },
+        "publicKey": { "type": "string" },
+        "notificationSettings": { "type": "object" },
+        "language": { "type": "string", "enum": ["en", "ar"] },
+        "lastSeen": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName", "email"]
+    },
+    "Call": {
+      "title": "Call Session",
+      "description": "Active or past video/voice communication session",
+      "type": "object",
+      "properties": {
+        "callId": { "type": "string" },
+        "hostId": { "type": "string" },
+        "type": { "type": "string", "enum": ["video", "voice", "stream"] },
+        "status": { "type": "string", "enum": ["pending", "active", "ended"] },
+        "participants": { "type": "array" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "endedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["callId", "hostId", "type", "status"]
+    },
+    "VideoAsset": {
+      "title": "Video Recording",
+      "description": "Metadata for uploaded or recorded video assets",
+      "type": "object",
+      "properties": {
+        "videoId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "title": { "type": "string" },
+        "storagePath": { "type": "string" },
+        "status": { "type": "string", "enum": ["uploading", "processing", "ready"] },
+        "duration": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["videoId", "ownerId", "title", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/calls/{callId}": {
+      "schema": "Call",
+      "description": "Call session documents"
+    },
+    "/videos/{videoId}": {
+      "schema": "VideoAsset",
+      "description": "Video recording metadata"
+    }
+  }
+}

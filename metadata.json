@@ -1,0 +1,9 @@
+{
+  "name": "Lumina - Unified Communication Platform",
+  "description": "A high-performance communication suite featuring video calls, live streaming, and video sharing with real-time capabilities.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": []
+}
