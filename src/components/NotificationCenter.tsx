@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Video, Radio, X, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Notification {
   id: string;
@@ -12,6 +13,7 @@ interface Notification {
 }
 
 export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+  const { t, isRtl } = useLanguage();
   const [notifications] = useState<Notification[]>([
     { 
       id: '1', 
@@ -51,15 +53,15 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
           />
           <motion.div 
-            initial={{ x: '100%' }}
+            initial={{ x: isRtl ? '-100%' : '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            className="fixed top-0 right-0 h-full w-full max-w-md glass border-l border-white/10 z-[70] shadow-2xl p-8"
+            exit={{ x: isRtl ? '-100%' : '100%' }}
+            className={`fixed top-0 ${isRtl ? 'left-0 border-r' : 'right-0 border-l'} h-full w-full max-w-md glass border-white/10 z-[70] shadow-2xl p-8`}
           >
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h2 className="text-2xl font-black tracking-tight uppercase">Event <span className="text-cyan-400 font-light italic">Logger.</span></h2>
-                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-1">Real-time Telemetry</p>
+            <div className={`flex justify-between items-center mb-8 ${isRtl? 'flex-row-reverse' : ''}`}>
+              <div className={isRtl ? 'text-right' : 'text-left'}>
+                <h2 className="text-2xl font-black tracking-tight uppercase">{t('notif.title')} <span className="text-cyan-400 font-light italic">{t('notif.subtitle')}</span></h2>
+                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-1">{t('notif.telemetry')}</p>
               </div>
               <button 
                 onClick={onClose}
@@ -73,12 +75,12 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
               {notifications.map((n) => (
                 <div key={n.id} className="p-5 glass border border-white/5 rounded-3xl group hover:border-cyan-500/30 transition-all shadow-lg overflow-hidden relative">
                    {n.encrypted && (
-                     <div className="absolute top-0 right-0 px-3 py-1 bg-cyan-400/10 text-cyan-400 text-[8px] font-black uppercase tracking-widest rounded-bl-xl flex items-center gap-1">
+                     <div className={`absolute top-0 ${isRtl ? 'left-0 rounded-br-0 rounded-bl-xl' : 'right-0 rounded-bl-xl'} px-3 py-1 bg-cyan-400/10 text-cyan-400 text-[8px] font-black uppercase tracking-widest flex items-center gap-1`}>
                        <ShieldCheck className="w-3 h-3" />
                        E2EE Active
                      </div>
                    )}
-                   <div className="flex items-start gap-4">
+                   <div className={`flex items-start gap-4 ${isRtl ? 'flex-row-reverse text-right' : ''}`}>
                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-cyan-400 border border-white/5 group-hover:bg-cyan-500 group-hover:text-black transition-all">
                        {n.type === 'message' && <MessageSquare className="w-5 h-5" />}
                        {n.type === 'call' && <Video className="w-5 h-5" />}
@@ -95,7 +97,7 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
             </div>
 
             <div className="mt-12 p-6 glass border border-cyan-500/20 rounded-3xl">
-              <div className="flex items-center gap-4 mb-4">
+              <div className={`flex items-center gap-4 mb-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
                  <ShieldCheck className="w-5 h-5 text-cyan-400" />
                  <span className="text-[10px] font-black uppercase tracking-widest">Protocol Guard</span>
               </div>
@@ -103,10 +105,10 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: '85%' }}
-                  className="bg-cyan-400 h-full glow-cyan shadow-[0_0_10px_#22d3ee]"
+                  className={`bg-cyan-400 h-full glow-cyan shadow-[0_0_10px_#22d3ee] ${isRtl ? 'mr-auto' : ''}`}
                 />
               </div>
-              <p className="text-[9px] text-slate-600 mt-3 font-mono">System is currently intercepting and verifying all incoming shards.</p>
+              <p className={`text-[9px] text-slate-600 mt-3 font-mono ${isRtl ? 'text-right' : ''}`}>{t('notif.shard')}</p>
             </div>
           </motion.div>
         </>

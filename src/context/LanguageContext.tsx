@@ -33,7 +33,11 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.update': 'Update Node',
     'profile.lang': 'Interface Language',
     'profile.bio': 'Neural Bio',
-    'profile.notifications': 'Notification Pulse'
+    'profile.notifications': 'Notification Pulse',
+    'notif.title': 'Event',
+    'notif.subtitle': 'Logger.',
+    'notif.telemetry': 'Real-time Telemetry',
+    'notif.shard': 'System is currently intercepting and verifying all incoming shards.'
   },
   ar: {
     'nav.features': 'الأنظمة الأساسية',
@@ -56,7 +60,11 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.update': 'تحديث الوحدة',
     'profile.lang': 'لغة الواجهة',
     'profile.bio': 'السيرة الذاتية الرقمية',
-    'profile.notifications': 'نبض التنبيهات'
+    'profile.notifications': 'نبض التنبيهات',
+    'notif.title': 'سجل',
+    'notif.subtitle': 'الأحداث.',
+    'notif.telemetry': 'القياس عن بعد المباشر',
+    'notif.shard': 'النظام يقوم حالياً باعتراض والتحقق من جميع الأجزاء الواردة.'
   }
 };
 

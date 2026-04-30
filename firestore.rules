@@ -27,68 +27,30 @@ service cloud.firestore {
       return resource.data;
     }
 
-    // --- Entity Validations ---
-
+    // --- User Validation ---
     function isValidUser(data) {
-      return data.keys().hasAll(['userId', 'displayName', 'email']) 
-        && data.keys().size() <= 6
-        && data.userId == request.auth.uid
-        && data.displayName is string && data.displayName.size() <= 50
-        && data.email is string && data.email.size() <= 100
-        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
-        && (!('status' in data) || (data.status in ['online', 'away', 'offline']))
-        && (!('lastSeen' in data) || (data.lastSeen is timestamp));
+      return data.keys().hasAll(['name', 'email']) 
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() <= 200
+        && (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 1000))
+        && (!('language' in data) || (data.language in ['en', 'ar']))
+        && (!('createdAt' in data) || (data.createdAt is string));
     }
 
-    function isValidCall(data) {
-      return data.keys().hasAll(['callId', 'hostId', 'type', 'status'])
-        && data.keys().size() <= 7
-        && data.callId is string && data.callId.size() <= 128
-        && data.hostId == request.auth.uid
-        && data.type in ['video', 'voice', 'stream']
-        && data.status in ['pending', 'active', 'ended']
-        && (!('participants' in data) || (data.participants is list && data.participants.size() <= 100));
-    }
-
-    function isValidVideo(data) {
-      return data.keys().hasAll(['videoId', 'ownerId', 'title', 'status'])
-        && data.keys().size() <= 7
-        && data.videoId is string && data.videoId.size() <= 128
-        && data.ownerId == request.auth.uid
-        && data.title is string && data.title.size() <= 200
-        && data.status in ['uploading', 'processing', 'ready']
-        && (!('duration' in data) || (data.duration is number))
-        && (!('createdAt' in data) || (data.createdAt == request.time))
-        && (!('storagePath' in data) || (data.storagePath is string && data.storagePath.size() <= 1024));
-    }
-
-    // --- Rules ---
-
+    // --- Collection Rules ---
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isOwner(userId) && isValidUser(incoming());
-      allow update: if isOwner(userId) && isValidUser(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'status', 'lastSeen']);
-    }
-
-    match /calls/{callId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && (resource.data.hostId == request.auth.uid || request.auth.uid in resource.data.participants);
-      allow create: if isSignedIn() && isValidCall(incoming()) && isValidId(callId);
-      allow update: if isSignedIn() && isValidCall(incoming()) && (
-        (isOwner(existing().hostId) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'participants'])) ||
-        (incoming().diff(existing()).affectedKeys().hasOnly(['participants']))
-      );
-    }
-
-    match /videos/{videoId} {
-      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
-      allow create: if isSignedIn() && isValidVideo(incoming()) && isValidId(videoId);
-      allow update: if isOwner(existing().ownerId) && isValidVideo(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'status']);
-      allow delete: if isOwner(existing().ownerId);
+      allow get: if isOwner(userId);
+      allow list: if false; // Users shouldn't be listable
+      
+      allow create: if isOwner(userId) 
+        && isValidId(userId)
+        && isValidUser(incoming());
+        
+      allow update: if isOwner(userId)
+        && isValidUser(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language']);
+        
+      allow delete: if false; // Account deletion not implemented yet
     }
   }
 }

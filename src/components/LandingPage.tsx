@@ -1,7 +1,11 @@
 import React, { ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { Video, Radio, Share2, ArrowRight, Shield, Zap, Globe } from 'lucide-react';
+import { Video, Radio, Share2, ArrowRight, Shield, Zap, Globe, LogIn } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { auth, db } from '../firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
 interface FeatureCardProps {
   icon: ReactNode;
@@ -25,6 +29,35 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
 export default function LandingPage({ onStart }: { onStart: () => void }) {
   const { t, isRtl } = useLanguage();
 
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      const path = `users/${result.user.uid}`;
+      try {
+        const userRef = doc(db, 'users', result.user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            name: result.user.displayName || 'Anonymous',
+            email: result.user.email || '',
+            avatar: result.user.photoURL || '',
+            language: isRtl ? 'ar' : 'en',
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, path);
+      }
+      
+      onStart();
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
   return (
     <div className={`min-h-screen bg-[#050608] text-[#e2e8f0] selection:bg-cyan-500 selection:text-black ${isRtl ? 'font-sans-arabic text-right' : ''}`}>
       {/* Navigation */}
@@ -39,9 +72,10 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           <a href="#pricing" className="hover:text-cyan-400 transition-colors">{t('nav.protocol')}</a>
         </div>
         <button 
-          onClick={onStart}
-          className="px-6 py-2 bg-cyan-400 text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-white transition-all active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.2)]"
+          onClick={handleGoogleLogin}
+          className="px-6 py-2 bg-cyan-400 text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-white transition-all active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.2)] flex items-center gap-2"
         >
+          <LogIn className="w-3 h-3" />
           {t('nav.launch')}
         </button>
       </nav>
@@ -91,9 +125,10 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
               className={`flex flex-col sm:flex-row gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}
             >
               <button 
-                onClick={onStart}
+                onClick={handleGoogleLogin}
                 className="group px-8 py-4 bg-cyan-400 text-black text-xs font-black uppercase tracking-widest rounded-xl flex items-center gap-2 hover:bg-white transition-all hover:shadow-[0_0_30px_rgba(34,211,238,0.4)] active:scale-95"
               >
+                <LogIn className="w-4 h-4" />
                 {t('hero.cta')}
                 <ArrowRight className={`w-4 h-4 group-hover:translate-x-1 transition-transform ${isRtl ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
               </button>

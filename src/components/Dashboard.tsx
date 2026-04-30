@@ -9,15 +9,22 @@ import {
   Monitor, 
   MessageSquare,
   Search,
-  Plus
+  Plus,
+  User as UserIcon,
+  Bell
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import VideoCallView from './VideoCallView';
 import VideoVault from './VideoVault';
 import ProfileView from './ProfileView';
+import LiveStreamView from './LiveStreamView';
 import NotificationCenter from './NotificationCenter';
-import { User as UserIcon, Bell } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { auth, db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useEffect } from 'react';
+import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
 interface SidebarItemProps {
   icon: ElementType;
@@ -49,11 +56,44 @@ export default function Dashboard() {
   const { t, isRtl } = useLanguage();
   const [currentView, setCurrentView] = useState<View>('overview');
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [userData, setUserData] = useState<{name: string, avatar: string} | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const path = `users/${user.uid}`;
+        try {
+          const docRef = doc(db, 'users', user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setUserData({
+              name: docSnap.data().name || user.displayName || 'User',
+              avatar: docSnap.data().avatar || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`
+            });
+          }
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, path);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      window.location.reload(); // Simple way to reset to landing
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const renderContent = () => {
     switch (currentView) {
       case 'video-calls':
         return <VideoCallView />;
+      case 'live-streams':
+        return <LiveStreamView />;
       case 'recordings':
         return <VideoVault />;
       case 'profile':
@@ -90,6 +130,7 @@ export default function Dashboard() {
 
               <motion.div 
                 whileHover={{ y: -4 }}
+                onClick={() => setCurrentView('live-streams')}
                 className="p-8 glass rounded-3xl group cursor-pointer"
               >
                 <div className={`w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center mb-6 transition-all group-hover:bg-cyan-500 group-hover:text-black ${isRtl ? 'mr-auto' : ''}`}>
@@ -203,7 +244,10 @@ export default function Dashboard() {
         </nav>
 
         <div className="pt-6 border-t border-white/5 mt-auto">
-          <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/5 transition-all ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`}>
+          <button 
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/5 transition-all ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`}
+          >
             <LogOut className="w-5 h-5 shrink-0" />
             <span className={`text-xs font-bold uppercase tracking-widest ${isRtl ? 'mr-3' : 'ml-3'}`}>Terminate</span>
           </button>
@@ -243,7 +287,7 @@ export default function Dashboard() {
             </button>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 border border-white/20 shrink-0 p-0.5">
               <div className="w-full h-full rounded-[9px] bg-[#050608] flex items-center justify-center text-[10px] font-black uppercase overflow-hidden">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Alex`} alt="Avatar" className="w-full h-full object-cover opacity-80" />
+                <img src={userData?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=Alex`} alt="Avatar" className="w-full h-full object-cover opacity-80" />
               </div>
             </div>
           </div>
