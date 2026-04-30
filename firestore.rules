@@ -15,8 +15,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isVerifiedOwner(userId) {
+      return isOwner(userId) && request.auth.token.email_verified == true;
+    }
+
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
     }
 
     function incoming() {
@@ -40,17 +44,17 @@ service cloud.firestore {
     // --- Collection Rules ---
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false; // Users shouldn't be listable
+      allow list: if false;
       
-      allow create: if isOwner(userId) 
+      allow create: if isVerifiedOwner(userId) 
         && isValidId(userId)
         && isValidUser(incoming());
         
-      allow update: if isOwner(userId)
+      allow update: if isVerifiedOwner(userId)
         && isValidUser(incoming())
         && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language']);
         
-      allow delete: if false; // Account deletion not implemented yet
+      allow delete: if false;
     }
   }
 }

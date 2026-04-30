@@ -74,7 +74,7 @@ export default function VideoCallView() {
   ];
 
   return (
-    <div className={`flex h-full gap-6 ${isRtl ? 'flex-row-reverse' : ''}`}>
+    <div className="flex h-full gap-6">
       {/* Main Call Layout */}
       <div className="flex-1 flex flex-col gap-8 min-w-0">
         {/* Participant Grid */}
@@ -172,24 +172,24 @@ export default function VideoCallView() {
         </div>
 
         {/* Modern Control Center */}
-        <div className={`h-24 glass border border-white/5 rounded-[40px] px-10 flex items-center justify-between shadow-2xl relative mb-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
-          <div className={`flex items-center gap-6 ${isRtl ? 'flex-row-reverse' : ''}`}>
-            <div className={`flex -space-x-3 ${isRtl ? 'flex-row-reverse space-x-reverse' : ''}`}>
+        <div className="h-24 glass border border-white/5 rounded-[40px] px-10 flex items-center justify-between shadow-2xl relative mb-4">
+          <div className="flex items-center gap-6">
+            <div className="flex -space-x-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="w-9 h-9 rounded-full border-2 border-[#050608] glass flex items-center justify-center text-[9px] font-black hover:z-10 transition-all hover:scale-110 cursor-pointer">
                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=User${i}`} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                 </div>
               ))}
-              <div className="w-9 h-9 rounded-full border-2 border-[#050608] bg-cyan-400 flex items-center justify-center text-[10px] font-black text-black shadow-[0_0_15px_rgba(34,211,238,0.3)] cursor-pointer hover:scale-110 transition-all">+2</div>
+              <div className="w-9 h-9 rounded-full border-2 border-[#050608] bg-cyan-400 flex items-center justify-center text-[10px] font-black text-black shadow-[0_0_15px_rgba(34,211,238,0.3)] cursor-pointer hover:scale-110 transition-all flex-shrink-0">+2</div>
             </div>
-            <div className="h-6 w-[1px] bg-white/5" />
-            <div className={`flex flex-col ${isRtl ? 'items-end' : ''}`}>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase font-black glow-text">Secure Canal_04</span>
-              <span className="text-[8px] text-slate-600 font-mono tracking-widest uppercase mt-0.5">4K • 12MBPS • AES-256-GCM ACTIVE</span>
+            <div className="h-6 w-[1px] bg-white/5 shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase font-black glow-text">{t('video.secureCanal')}_04</span>
+              <span className="text-[8px] text-slate-600 font-mono tracking-widest uppercase mt-0.5">{t('video.telemetrySpecs')}</span>
             </div>
           </div>
 
-          <div className={`flex items-center gap-4 bg-black/40 p-2 rounded-[30px] border border-white/5 shadow-inner ${isRtl ? 'flex-row-reverse' : ''}`}>
+          <div className="flex items-center gap-4 bg-black/40 p-2 rounded-[30px] border border-white/5 shadow-inner">
             <button 
               onClick={() => setIsMuted(!isMuted)}
               className={`w-12 h-12 rounded-full border transition-all flex items-center justify-center group active:scale-90 ${isMuted ? 'bg-red-500/20 border-red-500/50' : 'border-white/5 glass hover:bg-white/5'}`}
@@ -216,15 +216,15 @@ export default function VideoCallView() {
             >
               <Monitor className="w-5 h-5" />
             </button>
-            <button className="w-20 h-12 rounded-[24px] bg-red-500 text-white hover:bg-red-600 transition-all flex items-center justify-center shadow-lg shadow-red-500/20 active:scale-90 font-black text-[10px] uppercase tracking-widest">
+            <button className="w-20 h-12 rounded-[24px] bg-red-500 text-white hover:bg-red-600 transition-all flex items-center justify-center shadow-lg shadow-red-500/20 active:scale-90 font-black text-[10px] uppercase tracking-widest shrink-0">
               <PhoneOff className="w-5 h-5" />
             </button>
           </div>
 
-          <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+          <div className="flex items-center gap-2">
             <button className="p-4 glass rounded-2xl text-slate-500 hover:text-cyan-400 transition-all relative group border border-white/5">
               <MessageSquare className="w-5 h-5" />
-              <span className="absolute top-3 right-3 w-2 h-2 bg-cyan-400 rounded-full glow-cyan animate-pulse shadow-[0_0_10px_#22d3ee]" />
+              <span className={`absolute top-3 ${isRtl ? 'left-3' : 'right-3'} w-2 h-2 bg-cyan-400 rounded-full glow-cyan animate-pulse shadow-[0_0_10px_#22d3ee]`} />
             </button>
             <button 
               onClick={() => setIsParticipantsOpen(!isParticipantsOpen)}
@@ -261,18 +261,18 @@ export default function VideoCallView() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+            <div className="p-6 space-y-4 overflow-y-auto scrollbar-hide">
               {participants.map((p) => (
-                <div key={p.id} className={`p-4 glass border border-white/5 rounded-3xl flex items-center gap-4 group hover:border-cyan-500/30 transition-all ${isRtl ? 'flex-row-reverse' : ''}`}>
+                <div key={p.id} className="p-4 glass border border-white/5 rounded-3xl flex items-center gap-4 group hover:border-cyan-500/30 transition-all">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-xl glass border-2 border-white/5 flex items-center justify-center p-0.5 group-hover:border-cyan-500/30 transition-all">
                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.avatar}`} alt="Avatar" className="w-full h-full rounded-[9px] object-cover opacity-80" />
                     </div>
                     {p.status === 'Active' && (
-                      <span className={`absolute -bottom-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full border-2 border-[#050608] shadow-[0_0_8px_#22d3ee]`} />
+                      <span className={`absolute -bottom-1 ${isRtl ? '-left-1' : '-right-1'} w-3 h-3 bg-cyan-400 rounded-full border-2 border-[#050608] shadow-[0_0_8px_#22d3ee]`} />
                     )}
                   </div>
-                  <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : ''}`}>
+                  <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-black text-[#e2e8f0] truncate uppercase tracking-tight">{p.name}</div>
                     <div className="text-[9px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
                        <Shield className="w-3 h-3 text-cyan-400/40" />

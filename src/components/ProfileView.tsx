@@ -88,11 +88,11 @@ export default function ProfileView() {
              <div className="mt-8 pt-8 border-t border-white/5 w-full space-y-4">
                 <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-400 font-bold">
                   <Key className="w-4 h-4 text-cyan-400" />
-                  E2EE Shard Active
+                  {t('profile.shard')}
                 </div>
                 <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-400 font-bold">
                   <Shield className="w-4 h-4 text-cyan-400" />
-                  Secure Protocol
+                  {t('profile.protocol')}
                 </div>
              </div>
           </div>
@@ -127,10 +127,10 @@ export default function ProfileView() {
         {/* Edit Form */}
         <div className="md:col-span-2 space-y-8">
           <div className="glass border border-white/5 rounded-[40px] p-8 space-y-6">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6">Core Credentials</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6">{t('profile.credentials')}</h3>
             
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Display Name</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">{t('profile.name')}</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input 
@@ -138,7 +138,7 @@ export default function ProfileView() {
                   value={profile.displayName}
                   onChange={e => setProfile({...profile, displayName: e.target.value})}
                   className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-cyan-400/50 transition-all font-medium text-[#e2e8f0]"
-                  placeholder="Enter your handle..."
+                  placeholder="..."
                 />
               </div>
             </div>
@@ -149,12 +149,12 @@ export default function ProfileView() {
                 value={profile.bio}
                 onChange={e => setProfile({...profile, bio: e.target.value})}
                 className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-cyan-400/50 transition-all font-medium min-h-[120px] text-[#e2e8f0]"
-                placeholder="Briefly describe your station purpose..."
+                placeholder="..."
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Contact Gateway (Email)</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">{t('profile.email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input 

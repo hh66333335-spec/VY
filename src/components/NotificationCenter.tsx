@@ -58,7 +58,7 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
             exit={{ x: isRtl ? '-100%' : '100%' }}
             className={`fixed top-0 ${isRtl ? 'left-0 border-r' : 'right-0 border-l'} h-full w-full max-w-md glass border-white/10 z-[70] shadow-2xl p-8`}
           >
-            <div className={`flex justify-between items-center mb-8 ${isRtl? 'flex-row-reverse' : ''}`}>
+            <div className="flex justify-between items-center mb-8">
               <div className={isRtl ? 'text-right' : 'text-left'}>
                 <h2 className="text-2xl font-black tracking-tight uppercase">{t('notif.title')} <span className="text-cyan-400 font-light italic">{t('notif.subtitle')}</span></h2>
                 <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-1">{t('notif.telemetry')}</p>
@@ -80,8 +80,8 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
                        E2EE Active
                      </div>
                    )}
-                   <div className={`flex items-start gap-4 ${isRtl ? 'flex-row-reverse text-right' : ''}`}>
-                     <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-cyan-400 border border-white/5 group-hover:bg-cyan-500 group-hover:text-black transition-all">
+                   <div className="flex items-start gap-4">
+                     <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-cyan-400 border border-white/5 group-hover:bg-cyan-500 group-hover:text-black transition-all shrink-0">
                        {n.type === 'message' && <MessageSquare className="w-5 h-5" />}
                        {n.type === 'call' && <Video className="w-5 h-5" />}
                        {n.type === 'stream' && <Radio className="w-5 h-5" />}
@@ -97,7 +97,7 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
             </div>
 
             <div className="mt-12 p-6 glass border border-cyan-500/20 rounded-3xl">
-              <div className={`flex items-center gap-4 mb-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <div className="flex items-center gap-4 mb-4">
                  <ShieldCheck className="w-5 h-5 text-cyan-400" />
                  <span className="text-[10px] font-black uppercase tracking-widest">Protocol Guard</span>
               </div>

@@ -37,19 +37,29 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
       const path = `users/${result.user.uid}`;
       try {
         const userRef = doc(db, 'users', result.user.uid);
-        const userSnap = await getDoc(userRef);
+        let userSnap;
+        try {
+          userSnap = await getDoc(userRef);
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, path);
+        }
         
         if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            name: result.user.displayName || 'Anonymous',
-            email: result.user.email || '',
-            avatar: result.user.photoURL || '',
-            language: isRtl ? 'ar' : 'en',
-            createdAt: new Date().toISOString()
-          });
+          try {
+            await setDoc(userRef, {
+              name: result.user.displayName || 'Anonymous',
+              email: result.user.email || '',
+              avatar: result.user.photoURL || '',
+              language: isRtl ? 'ar' : 'en',
+              createdAt: new Date().toISOString()
+            });
+          } catch (error) {
+            handleFirestoreError(error, OperationType.CREATE, path);
+          }
         }
       } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, path);
+        // Error already handled and re-thrown by handleFirestoreError
+        console.error("Login profile sync failed:", error);
       }
       
       onStart();
@@ -59,14 +69,14 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
   };
 
   return (
-    <div className={`min-h-screen bg-[#050608] text-[#e2e8f0] selection:bg-cyan-500 selection:text-black ${isRtl ? 'font-sans-arabic text-right' : ''}`}>
+    <div className={`min-h-screen bg-[#050608] text-[#e2e8f0] selection:bg-cyan-500 selection:text-black ${isRtl ? 'font-sans-arabic' : ''}`}>
       {/* Navigation */}
-      <nav className={`fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl z-50 px-6 py-4 flex justify-between items-center glass rounded-2xl glow-cyan ${isRtl ? 'flex-row-reverse' : ''}`}>
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl z-50 px-6 py-4 flex justify-between items-center glass rounded-2xl glow-cyan">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-cyan-400 rounded-lg flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(34,211,238,0.4)]">L</div>
           <span className="text-xl font-bold tracking-[0.2em] uppercase glow-text">Lumina</span>
         </div>
-        <div className={`hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest text-slate-400 ${isRtl ? 'flex-row-reverse' : ''}`}>
+        <div className="hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest text-slate-400">
           <a href="#features" className="hover:text-cyan-400 transition-colors">{t('nav.features')}</a>
           <a href="#tech" className="hover:text-cyan-400 transition-colors">{t('nav.docs')}</a>
           <a href="#pricing" className="hover:text-cyan-400 transition-colors">{t('nav.protocol')}</a>
@@ -122,7 +132,7 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className={`flex flex-col sm:flex-row gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}
+              className="flex flex-col sm:flex-row gap-4"
             >
               <button 
                 onClick={handleGoogleLogin}

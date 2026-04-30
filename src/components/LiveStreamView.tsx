@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { 
   Radio, 
   Users, 
@@ -94,17 +94,21 @@ export default function LiveStreamView() {
           </div>
 
           {/* Co-Host PIPs */}
-          <div className="absolute top-8 right-8 flex flex-col gap-4 z-10">
+          <Reorder.Group 
+            axis="y" 
+            values={coHosts} 
+            onReorder={setCoHosts}
+            className="absolute top-8 right-8 flex flex-col gap-4 z-10"
+          >
             <AnimatePresence>
               {coHosts.map((host) => (
-                <motion.div 
+                <Reorder.Item 
                   key={host.id}
+                  value={host}
                   initial={{ opacity: 0, x: 20, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  drag
-                  dragConstraints={{ left: -400, right: 0, top: 0, bottom: 400 }}
-                  className="w-48 aspect-video glass border border-cyan-400/30 rounded-2xl overflow-hidden shadow-2xl cursor-move group/host"
+                  className="w-48 aspect-video glass border border-cyan-400/30 rounded-2xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing group/host"
                 >
                   <div className="absolute inset-0 bg-slate-800 flex items-center justify-center">
                     {host.isVideoOff ? (
@@ -136,10 +140,10 @@ export default function LiveStreamView() {
                       <X className="w-3 h-3" />
                     </button>
                   </div>
-                </motion.div>
+                </Reorder.Item>
               ))}
             </AnimatePresence>
-          </div>
+          </Reorder.Group>
 
           {/* Overlays */}
           <div className="absolute top-8 left-8 flex items-center gap-4">
