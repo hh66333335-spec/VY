@@ -66,7 +66,9 @@ export default function VideoCallView() {
     } else {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
+          video: {
+            cursor: "always"
+          } as any,
           audio: true
         });
         
@@ -85,10 +87,10 @@ export default function VideoCallView() {
   };
 
   useEffect(() => {
-    if (screenVideoRef.current && screenStream) {
+    if (screenVideoRef.current && screenStream && isScreenSharing) {
       screenVideoRef.current.srcObject = screenStream;
     }
-  }, [screenStream]);
+  }, [screenStream, isScreenSharing]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -247,7 +249,10 @@ export default function VideoCallView() {
             >
               <Monitor className="w-5 h-5" />
             </button>
-            <button className="w-20 h-12 rounded-[24px] bg-red-500 text-white hover:bg-red-600 transition-all flex items-center justify-center shadow-lg shadow-red-500/20 active:scale-90 font-black text-[10px] uppercase tracking-widest shrink-0">
+            <button 
+              onClick={() => window.location.href = '#dashboard'}
+              className="w-20 h-12 rounded-[24px] bg-red-500 text-white hover:bg-red-600 transition-all flex items-center justify-center shadow-lg shadow-red-500/20 active:scale-90 font-black text-[10px] uppercase tracking-widest shrink-0"
+            >
               <PhoneOff className="w-5 h-5" />
             </button>
           </div>
