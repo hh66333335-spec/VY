@@ -17,7 +17,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 
 export default function VideoCallView() {
-  const { isRtl } = useLanguage();
+  const { t, isRtl } = useLanguage();
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);

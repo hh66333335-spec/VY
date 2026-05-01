@@ -157,18 +157,18 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard 
               icon={<Video className="w-6 h-6" />}
-              title="RTC Handshakes"
-              description="Low-latency WebRTC pipelines with adaptive bitrate adaptive mesh active for seamless 4K delivery."
+              title={t('landing.feature1.title')}
+              description={t('landing.feature1.desc')}
             />
             <FeatureCard 
               icon={<Radio className="w-6 h-6" />}
-              title="Media Ingestion"
-              description="Professional scale RTMP/HLS ingestion hubs with multi-cam redundancy and integrated WebSocket telemetry."
+              title={t('landing.feature2.title')}
+              description={t('landing.feature2.desc')}
             />
             <FeatureCard 
               icon={<Share2 className="w-6 h-6" />}
-              title="Object Storage"
-              description="Secure AES-256 encrypted asset management with automated transcoding and AI-driven metadata extraction."
+              title={t('landing.feature3.title')}
+              description={t('landing.feature3.desc')}
             />
           </div>
         </div>
@@ -179,19 +179,19 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
           <div className="stat-border pl-6 text-left">
             <div className="text-4xl font-black mb-2 glow-text tracking-tighter">99.9%</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">Uptime SLI</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">{t('landing.stats.uptime')}</div>
           </div>
           <div className="stat-border pl-6 text-left">
             <div className="text-4xl font-black mb-2 glow-text tracking-tighter">24ms</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">P99 Latency</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">{t('landing.stats.latency')}</div>
           </div>
           <div className="stat-border pl-6 text-left">
             <div className="text-4xl font-black mb-2 glow-text tracking-tighter">1.4M</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">Throughput</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">{t('landing.stats.throughput')}</div>
           </div>
           <div className="stat-border pl-6 text-left">
             <div className="text-4xl font-black mb-2 glow-text tracking-tighter">AES</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">Security</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">{t('landing.stats.security')}</div>
           </div>
         </div>
       </section>

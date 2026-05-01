@@ -37,6 +37,8 @@ service cloud.firestore {
         && data.name is string && data.name.size() <= 100
         && data.email is string && data.email.size() <= 200
         && (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 1000))
+        && (!('bio' in data) || (data.bio is string && data.bio.size() <= 500))
+        && (!('notificationSettings' in data) || (data.notificationSettings is map))
         && (!('language' in data) || (data.language in ['en', 'ar']))
         && (!('createdAt' in data) || (data.createdAt is string));
     }
@@ -52,7 +54,7 @@ service cloud.firestore {
         
       allow update: if isVerifiedOwner(userId)
         && isValidUser(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language', 'bio', 'notificationSettings']);
         
       allow delete: if false;
     }

@@ -9,10 +9,10 @@ export default function ProfileView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
-    displayName: '',
+    name: '',
     bio: '',
     email: '',
-    photoURL: '',
+    avatar: '',
     notificationSettings: {
       messages: true,
       calls: true,
@@ -26,7 +26,15 @@ export default function ProfileView() {
       const docRef = doc(db, 'users', auth.currentUser.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setProfile(prev => ({ ...prev, ...docSnap.data() }));
+        const data = docSnap.data();
+        setProfile(prev => ({ 
+          ...prev, 
+          name: data.name || '',
+          bio: data.bio || '',
+          email: data.email || '',
+          avatar: data.avatar || '',
+          notificationSettings: data.notificationSettings || prev.notificationSettings
+        }));
       }
       setLoading(false);
     };
@@ -38,7 +46,15 @@ export default function ProfileView() {
     setSaving(true);
     try {
       const docRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(docRef, profile);
+      // Filter fields to match firestore.rules permitted keys
+      const updateData = {
+        name: profile.name,
+        avatar: profile.avatar,
+        language: language,
+        bio: profile.bio,
+        notificationSettings: profile.notificationSettings
+      };
+      await updateDoc(docRef, updateData);
       // Simulate feedback
       setTimeout(() => setSaving(false), 800);
     } catch (error) {
@@ -48,6 +64,16 @@ export default function ProfileView() {
   };
 
   if (loading) return <div className="flex items-center justify-center h-full text-cyan-400 animate-pulse">INIT_PROFILE_SYNC...</div>;
+
+  const presets = [
+    'Adventurer',
+    'Avataaars',
+    'Big-Ears',
+    'Bottts',
+    'Lorelei',
+    'Micah',
+    'Pixel-Art'
+  ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -70,19 +96,16 @@ export default function ProfileView() {
         {/* Profile Card */}
         <div className="md:col-span-1 space-y-6">
           <div className="p-8 glass border border-cyan-500/10 rounded-[40px] relative overflow-hidden group flex flex-col items-center text-center">
-             <div className="relative group/avatar mb-6">
-                <div className="w-32 h-32 rounded-full glass border-2 border-cyan-500/30 p-1 relative">
+             <div className="relative mb-6">
+                <div className="w-32 h-32 rounded-full glass border-2 border-cyan-500/30 p-1 relative overflow-hidden">
                    <img 
-                    src={profile.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${auth.currentUser?.uid}`} 
+                    src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${auth.currentUser?.uid}`} 
                     alt="Avatar" 
                     className="w-full h-full rounded-full object-cover"
                    />
                 </div>
-                <button className="absolute bottom-0 right-0 p-3 bg-cyan-400 rounded-full text-black shadow-lg opacity-0 group-hover/avatar:opacity-100 transition-all transform scale-90 group-hover/avatar:scale-100 hover:bg-white">
-                  <Camera className="w-4 h-4" />
-                </button>
              </div>
-             <h2 className="text-xl font-black text-[#e2e8f0] uppercase tracking-tight">{profile.displayName || 'Anonymous User'}</h2>
+             <h2 className="text-xl font-black text-[#e2e8f0] uppercase tracking-tight">{profile.name || 'Anonymous User'}</h2>
              <p className="text-[10px] font-mono text-slate-500 uppercase mt-1">Status: Active Node</p>
              
              <div className="mt-8 pt-8 border-t border-white/5 w-full space-y-4">
@@ -95,6 +118,42 @@ export default function ProfileView() {
                   {t('profile.protocol')}
                 </div>
              </div>
+          </div>
+
+          <div className="glass border border-white/5 rounded-[40px] p-8">
+            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6">{t('profile.avatar')}</h3>
+            <div className="space-y-4">
+              <div className="relative">
+                <Camera className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <input 
+                  type="text"
+                  value={profile.avatar}
+                  onChange={e => setProfile({...profile, avatar: e.target.value})}
+                  className="w-full bg-slate-900/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-[10px] focus:outline-none focus:border-cyan-400/50 transition-all font-mono text-[#e2e8f0] uppercase tracking-tighter"
+                  placeholder={t('profile.avatarPlaceholder')}
+                />
+              </div>
+              
+              <div className="pt-4 border-t border-white/5">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 block mb-4">{t('profile.presets')}</span>
+                <div className="grid grid-cols-4 gap-2">
+                  {presets.map(style => (
+                    <button
+                      key={style}
+                      onClick={() => setProfile({...profile, avatar: `https://api.dicebear.com/7.x/${style.toLowerCase()}/svg?seed=${auth.currentUser?.uid}`})}
+                      className="aspect-square glass border border-white/5 rounded-lg overflow-hidden hover:border-cyan-400/50 transition-all p-1 group"
+                      title={style}
+                    >
+                      <img 
+                        src={`https://api.dicebear.com/7.x/${style.toLowerCase()}/svg?seed=${auth.currentUser?.uid}`} 
+                        alt={style}
+                        className="w-full h-full object-cover rounded-md opacity-60 group-hover:opacity-100 transition-opacity"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="glass border border-white/5 rounded-[40px] p-8">
@@ -135,8 +194,8 @@ export default function ProfileView() {
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input 
                   type="text"
-                  value={profile.displayName}
-                  onChange={e => setProfile({...profile, displayName: e.target.value})}
+                  value={profile.name}
+                  onChange={e => setProfile({...profile, name: e.target.value})}
                   className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-cyan-400/50 transition-all font-medium text-[#e2e8f0]"
                   placeholder="..."
                 />
@@ -172,9 +231,9 @@ export default function ProfileView() {
             
             <div className="space-y-6">
               {[
-                { key: 'messages', label: 'Message Telemetry', desc: 'Notify on incoming cipher streams.' },
-                { key: 'calls', label: 'Handshake Requests', desc: 'Alert when peer connections are initialized.' },
-                { key: 'streams', label: 'Broadcast Signals', desc: 'Update when global ingestion nodes go live.' }
+                { key: 'messages', label: t('profile.notif.messages.label'), desc: t('profile.notif.messages.desc') },
+                { key: 'calls', label: t('profile.notif.calls.label'), desc: t('profile.notif.calls.desc') },
+                { key: 'streams', label: t('profile.notif.streams.label'), desc: t('profile.notif.streams.desc') }
               ].map((pref) => (
                 <div key={pref.key} className="flex items-center justify-between group">
                   <div className="flex items-center gap-4">

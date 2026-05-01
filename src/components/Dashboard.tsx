@@ -21,7 +21,7 @@ import LiveStreamView from './LiveStreamView';
 import NotificationCenter from './NotificationCenter';
 import { useLanguage } from '../context/LanguageContext';
 import { auth, db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useEffect } from 'react';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
@@ -58,24 +58,32 @@ export default function Dashboard() {
   const [userData, setUserData] = useState<{name: string, avatar: string} | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    let unsubUser: (() => void) | null = null;
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const path = `users/${user.uid}`;
-        try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
+        const docRef = doc(db, 'users', user.uid);
+        unsubUser = onSnapshot(docRef, (docSnap) => {
           if (docSnap.exists()) {
+            const data = docSnap.data();
             setUserData({
-              name: docSnap.data().name || user.displayName || 'User',
-              avatar: docSnap.data().avatar || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`
+              name: data.name || user.displayName || 'User',
+              avatar: data.avatar || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`
             });
           }
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, path);
-        }
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+        });
+      } else {
+        if (unsubUser) unsubUser();
+        setUserData(null);
       }
     });
-    return () => unsub();
+
+    return () => {
+      unsubAuth();
+      if (unsubUser) unsubUser();
+    };
   }, []);
 
   const handleLogout = async () => {
