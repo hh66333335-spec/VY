@@ -8,16 +8,40 @@
         "name": { "type": "string", "description": "Display name of the user" },
         "email": { "type": "string", "format": "email", "description": "Email address" },
         "avatar": { "type": "string", "description": "URL to the user's profile picture" },
+        "username": { "type": "string", "description": "Unique handle for the user" },
+        "website": { "type": "string", "description": "Personal website or social link" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "isPublic": { "type": "boolean", "description": "Profile visibility status" },
+        "role": { "type": "string", "enum": ["viewer", "editor", "admin"], "description": "Access level within the platform" },
         "language": { "type": "string", "enum": ["en", "ar"], "description": "Preferred language" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
       },
       "required": ["name", "email"]
+    },
+    "Recording": {
+      "title": "Recording",
+      "description": "Metadata for uploaded video recordings",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the recording" },
+        "duration": { "type": "string", "description": "Length of the video" },
+        "size": { "type": "string", "description": "File size description" },
+        "status": { "type": "string", "enum": ["Ready", "Transcoded", "Optimizing", "Processing"], "description": "Current processing state" },
+        "ownerId": { "type": "string", "description": "Owner user ID" },
+        "isPublic": { "type": "boolean", "description": "Whether the recording is shared" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time of ingest" }
+      },
+      "required": ["title", "ownerId", "createdAt"]
     }
   },
   "firestore": {
-    "users/{userId}": {
+    "/users/{userId}": {
       "schema": "User",
       "description": "User profile document keyed by UID."
+    },
+    "/recordings/{recordingId}": {
+      "schema": "Recording",
+      "description": "Vaulted video recordings"
     }
   }
 }

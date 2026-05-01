@@ -34,8 +34,53 @@ export default function LiveStreamView() {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [viewerCount] = useState(1284);
   const [isChatOpen, setIsChatOpen] = useState(true);
+
+  useEffect(() => {
+    if (isStreaming && videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [isStreaming, stream]);
+
+  const startStream = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      setStream(mediaStream);
+      setIsStreaming(true);
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        user: 'System', 
+        text: 'BROADCAST_START: Global node ingestion active.', 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isSystem: true 
+      }]);
+    } catch (err) {
+      console.error("Failed to get camera:", err);
+      // Fallback or error msg
+    }
+  };
+
+  const stopStream = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setStream(null);
+    setIsStreaming(false);
+    setMessages(prev => [...prev, { 
+      id: Date.now().toString(), 
+      user: 'System', 
+      text: 'BROADCAST_TERMINATED: Pipeline flushed.', 
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isSystem: true 
+    }]);
+  };
   const [coHosts, setCoHosts] = useState([
     { id: 'beta', name: 'Peer_Beta', avatar: 'User2', isMuted: false, isVideoOff: false }
   ]);
@@ -89,7 +134,17 @@ export default function LiveStreamView() {
         <div className="relative aspect-video glass rounded-[40px] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] group">
           {/* Main Stream */}
           <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
-            <Radio className="w-16 h-16 text-cyan-400/20 animate-pulse" />
+            {isStreaming ? (
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Radio className="w-16 h-16 text-cyan-400/20 animate-pulse" />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
           </div>
 
@@ -147,9 +202,12 @@ export default function LiveStreamView() {
 
           {/* Overlays */}
           <div className="absolute top-8 left-8 flex items-center gap-4">
-             <div className="flex items-center gap-2 px-4 py-2 bg-red-500 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.4)]">
-                <Circle className="w-3 h-3 fill-white animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Live</span>
+             <div className={cn(
+               "flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg transition-all",
+               isStreaming ? "bg-red-500 shadow-red-500/40" : "bg-slate-800 text-slate-500 border border-white/5"
+             )}>
+                <Circle className={cn("w-3 h-3 fill-white", isStreaming && "animate-pulse")} />
+                <span className="text-[10px] font-black uppercase tracking-widest">{isStreaming ? 'Live' : 'Standby'}</span>
              </div>
              <div className="px-4 py-2 glass border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                 <Users className="w-3 h-3 text-cyan-400" />
@@ -188,15 +246,32 @@ export default function LiveStreamView() {
         <div className={`p-6 glass border border-white/5 rounded-[30px] flex items-center justify-between ${isRtl ? 'flex-row-reverse' : ''}`}>
            <div className={`flex items-center gap-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
               <button 
-                onClick={toggleRecording}
-                className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                onClick={isStreaming ? stopStream : startStream}
+                className={cn(
+                  "flex items-center gap-3 px-8 py-3 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest shadow-xl",
+                  isStreaming 
+                    ? "bg-slate-800 text-red-500 border border-red-500/30 hover:bg-red-500/10" 
+                    : "bg-cyan-400 text-black hover:bg-white shadow-cyan-400/20"
+                )}
               >
-                <Circle className={`w-4 h-4 ${isRecording ? 'fill-white' : ''}`} />
-                {isRecording ? 'Stop Recording' : 'Start Recording'}
+                {isStreaming ? <Radio className="w-4 h-4" /> : <Radio className="w-4 h-4" />}
+                {isStreaming ? 'End Broadcast' : 'Start Broadcast'}
               </button>
+
+              <button 
+                onClick={toggleRecording}
+                className={cn(
+                  "flex items-center gap-3 px-6 py-3 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest border border-white/5",
+                  isRecording ? "bg-red-500 text-white animate-pulse" : "bg-white/5 text-slate-400 hover:bg-white/10"
+                )}
+              >
+                <Circle className={cn("w-4 h-4", isRecording && "fill-white")} />
+                {isRecording ? 'Stop Recording' : 'Record Stream'}
+              </button>
+
               <button 
                 onClick={() => setIsInviteModalOpen(true)}
-                className="flex items-center gap-3 px-6 py-3 bg-cyan-400 text-black rounded-2xl hover:bg-white transition-all font-black text-[10px] uppercase tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+                className="flex items-center gap-3 px-6 py-3 border border-white/10 rounded-2xl hover:bg-white/5 transition-all font-black text-[10px] uppercase tracking-widest text-slate-400"
               >
                 <UserPlus className="w-4 h-4" />
                 Invite Co-Host

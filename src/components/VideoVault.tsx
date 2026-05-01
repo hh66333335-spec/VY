@@ -1,16 +1,81 @@
 import { motion } from 'motion/react';
-import { Play, Upload, Search, Filter, MoreHorizontal, Clock, HardDrive, Share2 } from 'lucide-react';
+import { Play, Upload, Search, Filter, MoreHorizontal, Clock, HardDrive, Share2, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useState, useEffect, useRef } from 'react';
+import { collection, query, addDoc, onSnapshot, serverTimestamp, orderBy } from 'firebase/firestore';
+import { db, auth } from '../firebase';
+import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
+
+interface Recording {
+  id: string;
+  title: string;
+  duration: string;
+  size: string;
+  status: string;
+  createdAt: any;
+  ownerId: string;
+}
 
 export default function VideoVault() {
-  const videos = [
-    { title: "QUARTERLY_ALL_HANDS_X", duration: "1:02:45", date: "2 days ago", size: "1.2GB", status: "Transcoded" },
-    { title: "PROD_LAUNCH_STRAT_04", duration: "45:12", date: "5 days ago", size: "840MB", status: "Ready" },
-    { title: "ENGINEERING_SYNC_ALPHA", duration: "24:00", date: "1 week ago", size: "420MB", status: "Optimizing" },
-  ];
+  const [videos, setVideos] = useState<Recording[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'recordings'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const vids = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Recording[];
+      setVideos(vids);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'recordings');
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auth.currentUser) return;
+
+    setUploading(true);
+    try {
+      // Simulate processing time
+      await addDoc(collection(db, 'recordings'), {
+        title: file.name.toUpperCase().replace(/\.[^/.]+$/, ""),
+        duration: "PROCESSING",
+        size: `${(file.size / (1024 * 1024)).toFixed(1)}MB`,
+        status: "Processing",
+        ownerId: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+        isPublic: false
+      });
+      
+      // In a real app, you'd upload to Storage here
+      // For this demo, we'll just simulate a successful database entry
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'recordings');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  if (loading) return <div className="flex items-center justify-center h-full text-cyan-400 animate-pulse font-black uppercase tracking-[0.4em]">SYNC_VAULT_METRICS...</div>;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 animate-in fade-in duration-700">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileUpload} 
+        className="hidden" 
+        accept="video/*"
+      />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8 border-b border-white/5">
         <div>
           <h1 className="text-4xl font-black tracking-tight uppercase">Media <span className="text-cyan-400 font-light italic">Vault.</span></h1>
@@ -21,9 +86,13 @@ export default function VideoVault() {
             <Search className="w-4 h-4 text-cyan-400" />
             Query
           </button>
-          <button className="flex items-center gap-3 px-6 py-3 bg-cyan-400 text-black rounded-2xl hover:bg-white transition-all font-black text-[10px] uppercase tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-            <Upload className="w-4 h-4" />
-            Ingest Asset
+          <button 
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-3 px-6 py-3 bg-cyan-400 text-black rounded-2xl hover:bg-white disabled:bg-slate-700 disabled:text-slate-400 transition-all font-black text-[10px] uppercase tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {uploading ? 'Ingesting...' : 'Ingest Asset'}
           </button>
         </div>
       </div>
@@ -75,7 +144,9 @@ export default function VideoVault() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className="font-black text-[13px] uppercase tracking-widest text-[#e2e8f0] group-hover:text-cyan-400 transition-all">{video.title}</h3>
-                  <p className="text-[10px] font-mono text-slate-600 mt-1.5 uppercase">{video.date} • {video.size}</p>
+                  <p className="text-[10px] font-mono text-slate-600 mt-1.5 uppercase">
+                    {video.createdAt?.toDate ? video.createdAt.toDate().toLocaleDateString() : 'Just now'} • {video.size}
+                  </p>
                 </div>
                 <button className="p-2.5 glass border border-white/5 rounded-xl text-slate-500 hover:text-white transition-all">
                   <MoreHorizontal className="w-4 h-4" />

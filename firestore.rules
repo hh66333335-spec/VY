@@ -19,6 +19,21 @@ service cloud.firestore {
       return isOwner(userId) && request.auth.token.email_verified == true;
     }
 
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        getUserData(request.auth.uid).role == 'admin' || 
+        request.auth.token.email == 'hh66333335@gmail.com'
+      );
+    }
+
+    function isEditor() {
+      return isSignedIn() && (getUserData(request.auth.uid).role == 'editor' || isAdmin());
+    }
+
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
     }
@@ -37,6 +52,11 @@ service cloud.firestore {
         && data.name is string && data.name.size() <= 100
         && data.email is string && data.email.size() <= 200
         && (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 1000))
+        && (!('role' in data) || (data.role in ['viewer', 'editor', 'admin']))
+        && (!('username' in data) || (data.username is string && data.username.size() <= 50))
+        && (!('website' in data) || (data.website is string && data.website.size() <= 200))
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 20))
+        && (!('isPublic' in data) || (data.isPublic is bool))
         && (!('bio' in data) || (data.bio is string && data.bio.size() <= 500))
         && (!('notificationSettings' in data) || (data.notificationSettings is map))
         && (!('language' in data) || (data.language in ['en', 'ar']))
@@ -44,19 +64,44 @@ service cloud.firestore {
     }
 
     // --- Collection Rules ---
+    function isValidRecording(data) {
+      return data.keys().hasAll(['title', 'ownerId', 'createdAt'])
+        && data.title is string && data.title.size() <= 200
+        && data.ownerId == request.auth.uid
+        && data.createdAt == request.time
+        && (!('status' in data) || (data.status in ['Ready', 'Transcoded', 'Optimizing', 'Processing']))
+        && (!('duration' in data) || (data.duration is string && data.duration.size() <= 20))
+        && (!('size' in data) || (data.size is string && data.size.size() <= 20))
+        && (!('isPublic' in data) || (data.isPublic is bool));
+    }
+
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
+      allow get: if isOwner(userId) || (isSignedIn() && existing().isPublic == true) || isAdmin();
+      allow list: if isSignedIn(); 
       
       allow create: if isVerifiedOwner(userId) 
         && isValidId(userId)
-        && isValidUser(incoming());
-        
-      allow update: if isVerifiedOwner(userId)
         && isValidUser(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language', 'bio', 'notificationSettings']);
+        && (incoming().role == 'viewer' || isAdmin()); // Default to viewer unless created by admin
         
-      allow delete: if false;
+      allow update: if (isVerifiedOwner(userId) || isAdmin())
+        && isValidUser(incoming())
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language', 'bio', 'notificationSettings', 'username', 'website', 'phone', 'isPublic', 'role'])) ||
+          (isVerifiedOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'language', 'bio', 'notificationSettings', 'username', 'website', 'phone', 'isPublic']) && incoming().role == existing().role)
+        );
+        
+      allow delete: if isAdmin();
+    }
+
+    match /recordings/{recordingId} {
+      allow get: if isSignedIn() && (isOwner(existing().ownerId) || existing().isPublic == true || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || resource.data.isPublic == true || isAdmin());
+      
+      allow create: if isSignedIn() && isValidRecording(incoming());
+      allow update: if isSignedIn() && (isOwner(existing().ownerId) || isAdmin()) && isValidRecording(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'status', 'isPublic', 'duration', 'size']);
+      allow delete: if isSignedIn() && (isOwner(existing().ownerId) || isAdmin());
     }
   }
 }

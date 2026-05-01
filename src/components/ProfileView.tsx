@@ -10,9 +10,14 @@ export default function ProfileView() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     name: '',
+    username: '',
+    website: '',
+    phone: '',
     bio: '',
     email: '',
     avatar: '',
+    role: 'viewer',
+    isPublic: true,
     notificationSettings: {
       messages: true,
       calls: true,
@@ -30,9 +35,14 @@ export default function ProfileView() {
         setProfile(prev => ({ 
           ...prev, 
           name: data.name || '',
+          username: data.username || '',
+          website: data.website || '',
+          phone: data.phone || '',
           bio: data.bio || '',
           email: data.email || '',
           avatar: data.avatar || '',
+          role: data.role || 'viewer',
+          isPublic: data.isPublic !== undefined ? data.isPublic : true,
           notificationSettings: data.notificationSettings || prev.notificationSettings
         }));
       }
@@ -49,7 +59,11 @@ export default function ProfileView() {
       // Filter fields to match firestore.rules permitted keys
       const updateData = {
         name: profile.name,
+        username: profile.username,
+        website: profile.website,
+        phone: profile.phone,
         avatar: profile.avatar,
+        isPublic: profile.isPublic,
         language: language,
         bio: profile.bio,
         notificationSettings: profile.notificationSettings
@@ -106,7 +120,7 @@ export default function ProfileView() {
                 </div>
              </div>
              <h2 className="text-xl font-black text-[#e2e8f0] uppercase tracking-tight">{profile.name || 'Anonymous User'}</h2>
-             <p className="text-[10px] font-mono text-slate-500 uppercase mt-1">Status: Active Node</p>
+             <p className="text-[10px] font-mono text-slate-500 uppercase mt-1">Status: Active Node • {profile.role || 'Viewer'}</p>
              
              <div className="mt-8 pt-8 border-t border-white/5 w-full space-y-4">
                 <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-400 font-bold">
@@ -183,46 +197,115 @@ export default function ProfileView() {
           </div>
         </div>
 
-        {/* Edit Form */}
+          {/* Edit Form */}
         <div className="md:col-span-2 space-y-8">
-          <div className="glass border border-white/5 rounded-[40px] p-8 space-y-6">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-6">{t('profile.credentials')}</h3>
+          <div className="glass border border-white/5 rounded-[40px] p-10 space-y-8">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs font-black uppercase tracking-[0.4em] text-cyan-400">{t('profile.credentials')}</h3>
+              <div className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">Auth_Level: {profile.role || 'viewer'}</div>
+            </div>
             
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">{t('profile.name')}</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input 
-                  type="text"
-                  value={profile.name}
-                  onChange={e => setProfile({...profile, name: e.target.value})}
-                  className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-cyan-400/50 transition-all font-medium text-[#e2e8f0]"
-                  placeholder="..."
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Display Name</label>
+                <div className="relative group">
+                  <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+                  <input 
+                    type="text"
+                    value={profile.name}
+                    onChange={e => setProfile({...profile, name: e.target.value})}
+                    className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-sm focus:outline-none focus:border-cyan-400/40 transition-all font-medium text-white placeholder:text-slate-700"
+                    placeholder="IDENTIFIER"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Neural Handle</label>
+                <div className="relative group">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400 font-black text-xs">@</span>
+                  <input 
+                    type="text"
+                    value={profile.username}
+                    onChange={e => setProfile({...profile, username: e.target.value})}
+                    className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-sm focus:outline-none focus:border-cyan-400/40 transition-all font-medium text-white placeholder:text-slate-700"
+                    placeholder="HANDLE"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">{t('profile.bio')}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Global Gateway</label>
+                <div className="relative group">
+                  <Shield className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+                  <input 
+                    type="text"
+                    value={profile.website}
+                    onChange={e => setProfile({...profile, website: e.target.value})}
+                    className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-sm focus:outline-none focus:border-cyan-400/40 transition-all font-medium text-white placeholder:text-slate-700"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Secure Link</label>
+                <div className="relative group">
+                  <Shield className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+                  <input 
+                    type="tel"
+                    value={profile.phone}
+                    onChange={e => setProfile({...profile, phone: e.target.value})}
+                    className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-sm focus:outline-none focus:border-cyan-400/40 transition-all font-medium text-white placeholder:text-slate-700"
+                    placeholder="+..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Biography Shard</label>
               <textarea 
                 value={profile.bio}
                 onChange={e => setProfile({...profile, bio: e.target.value})}
-                className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-cyan-400/50 transition-all font-medium min-h-[120px] text-[#e2e8f0]"
-                placeholder="..."
+                className="w-full bg-slate-900/40 border border-white/5 rounded-[32px] p-8 text-sm focus:outline-none focus:border-cyan-400/40 transition-all font-medium text-white min-h-[140px] resize-none leading-relaxed placeholder:text-slate-700"
+                placeholder="DESC_NODE_METADATA"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">{t('profile.email')}</label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{t('profile.email')}</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
                 <input 
                   type="email"
                   value={profile.email}
                   disabled
-                  className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-medium text-slate-600 cursor-not-allowed"
+                  className="w-full bg-slate-900/20 border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-sm font-medium text-slate-600 cursor-not-allowed"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="glass border border-white/5 rounded-[40px] p-8 space-y-6">
+            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400">{t('profile.privacy')}</h3>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setProfile({...profile, isPublic: true})}
+                className={`flex-1 py-4 rounded-2xl border transition-all text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 ${profile.isPublic ? 'bg-cyan-400 border-cyan-400 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-slate-900/40 border-white/5 text-slate-500 hover:border-white/10'}`}
+              >
+                <Languages className="w-4 h-4" />
+                {t('profile.public')}
+              </button>
+              <button 
+                onClick={() => setProfile({...profile, isPublic: false})}
+                className={`flex-1 py-4 rounded-2xl border transition-all text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 ${!profile.isPublic ? 'bg-cyan-400 border-cyan-400 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-slate-900/40 border-white/5 text-slate-500 hover:border-white/10'}`}
+              >
+                <Shield className="w-4 h-4" />
+                {t('profile.private')}
+              </button>
             </div>
           </div>
 

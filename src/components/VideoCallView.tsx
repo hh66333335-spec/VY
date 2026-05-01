@@ -23,7 +23,40 @@ export default function VideoCallView() {
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+
+  useEffect(() => {
+    const startLocalVideo = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Camera access denied:", err);
+      }
+    };
+
+    if (!isVideoOff) {
+      startLocalVideo();
+    } else {
+      localStream?.getTracks().forEach(t => t.stop());
+      setLocalStream(null);
+    }
+
+    return () => {
+      localStream?.getTracks().forEach(t => t.stop());
+    };
+  }, [isVideoOff]);
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, isVideoOff]);
 
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
@@ -135,15 +168,13 @@ export default function VideoCallView() {
                   </div>
                 </div>
               ) : (
-                <div className="relative group">
-                  <div className="w-32 h-32 rounded-full glass border border-cyan-500/30 flex items-center justify-center p-1">
-                    <div className="w-full h-full rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 animate-pulse opacity-20" />
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Avatar" className="w-full h-full object-cover rounded-full absolute opacity-80" />
-                  </div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 glass border border-cyan-500/30 rounded-full text-[8px] font-black uppercase tracking-widest text-cyan-400">
-                    Active
-                  </div>
-                </div>
+                <video 
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover mirror-mode"
+                />
               )}
             </div>
           </motion.div>

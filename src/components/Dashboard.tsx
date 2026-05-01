@@ -1,4 +1,4 @@
-import React, { useState, ElementType } from 'react';
+import React, { useState, useEffect, ElementType } from 'react';
 import { motion } from 'motion/react';
 import { 
   Video, 
@@ -7,24 +7,43 @@ import {
   Settings, 
   LogOut, 
   Monitor, 
-  MessageSquare,
   Search,
   Plus,
   User as UserIcon,
-  Bell
+  Bell,
+  Shield
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import VideoCallView from './VideoCallView';
 import VideoVault from './VideoVault';
 import ProfileView from './ProfileView';
 import LiveStreamView from './LiveStreamView';
+import SystemManagementView from './SystemManagementView';
 import NotificationCenter from './NotificationCenter';
 import { useLanguage } from '../context/LanguageContext';
 import { auth, db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { useEffect } from 'react';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
+
+const telemetryData = [
+  { name: '00:00', value: 400 },
+  { name: '04:00', value: 300 },
+  { name: '08:00', value: 600 },
+  { name: '12:00', value: 800 },
+  { name: '16:00', value: 500 },
+  { name: '20:00', value: 900 },
+  { name: '23:59', value: 700 },
+];
 
 interface SidebarItemProps {
   icon: ElementType;
@@ -49,13 +68,13 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: SidebarItemProps) =
   </button>
 );
 
-type View = 'overview' | 'video-calls' | 'live-streams' | 'recordings' | 'settings' | 'profile';
+type View = 'overview' | 'video-calls' | 'live-streams' | 'recordings' | 'settings' | 'profile' | 'management';
 
 export default function Dashboard() {
   const { t, isRtl } = useLanguage();
   const [currentView, setCurrentView] = useState<View>('overview');
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [userData, setUserData] = useState<{name: string, avatar: string} | null>(null);
+  const [userData, setUserData] = useState<{name: string, avatar: string, role: string} | null>(null);
 
   useEffect(() => {
     let unsubUser: (() => void) | null = null;
@@ -68,7 +87,8 @@ export default function Dashboard() {
             const data = docSnap.data();
             setUserData({
               name: data.name || user.displayName || 'User',
-              avatar: data.avatar || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`
+              avatar: data.avatar || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
+              role: data.role || 'viewer'
             });
           }
         }, (error) => {
@@ -105,12 +125,14 @@ export default function Dashboard() {
         return <VideoVault />;
       case 'profile':
         return <ProfileView />;
+      case 'management':
+        return <SystemManagementView />;
       case 'overview':
       default:
         return (
-          <div className="max-w-6xl mx-auto text-[#e2e8f0]">
+          <div className="max-w-6xl mx-auto text-[#e2e8f0] space-y-12 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header Section */}
-            <div className="flex justify-between items-end mb-12">
+            <div className="flex justify-between items-end">
               <div>
                 <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">{t('dashboard.title')} <span className="text-cyan-400 font-light italic">{t('dashboard.subtitle')}</span></h1>
                 <p className="text-slate-500 uppercase tracking-widest text-[10px] font-bold">{t('dashboard.session')}: AX-7729</p>
@@ -121,68 +143,144 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Quick Actions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              <motion.div 
-                whileHover={{ y: -4 }}
-                onClick={() => setCurrentView('video-calls')}
-                className="p-8 glass rounded-3xl glow-cyan group cursor-pointer border border-cyan-500/20"
-              >
-                <div className="w-12 h-12 bg-cyan-500 text-black rounded-xl flex items-center justify-center mb-6 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.6)] transition-all">
-                  <Video className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-black mb-2 text-cyan-400 uppercase tracking-tight">{t('dashboard.instant')}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-widest">Establish low-latency WebRTC peer connection.</p>
-              </motion.div>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: t('dashboard.throughput'), value: '4.2 GB/s', trend: '+12%', color: 'text-cyan-400' },
+                { label: t('dashboard.activeNodes'), value: '1,284', trend: 'STABLE', color: 'text-purple-400' },
+                { label: t('dashboard.latency'), value: '18ms', trend: '-2ms', color: 'text-amber-400' },
+                { label: t('dashboard.uptime'), value: '99.98%', trend: 'OPTIMAL', color: 'text-emerald-400' }
+              ].map((stat, i) => (
+                <motion.div 
+                  key={stat.label}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="glass border border-white/5 rounded-3xl p-6 hover:border-cyan-400/20 transition-all group"
+                >
+                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">{stat.label}</div>
+                  <div className="flex items-end justify-between">
+                    <div className="text-3xl font-black text-white tracking-tighter">{stat.value}</div>
+                    <div className={cn("text-[9px] font-mono font-black border border-white/5 px-2 py-1 rounded-lg", stat.color)}>
+                      {stat.trend}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
 
-              <motion.div 
-                whileHover={{ y: -4 }}
-                onClick={() => setCurrentView('live-streams')}
-                className="p-8 glass rounded-3xl group cursor-pointer"
-              >
-                <div className="w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center mb-6 transition-all group-hover:bg-cyan-500 group-hover:text-black">
-                  <Radio className="w-6 h-6" />
+            {/* Telemetry Chart */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 glass border border-white/5 rounded-[40px] p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400">{t('dashboard.telemetry')}</h3>
+                  <div className="flex gap-2">
+                    <span className="px-3 py-1 bg-cyan-400/10 text-cyan-400 text-[8px] font-black uppercase rounded-lg border border-cyan-400/20">LIVE DATA STREAM</span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-black mb-2 text-white uppercase tracking-tight">{t('dashboard.broadcast')}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-widest">Initialize global HLS/RTMP ingestion pipeline.</p>
-              </motion.div>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={telemetryData}>
+                      <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="rgba(255,255,255,0.2)" 
+                        fontSize={9} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tick={{ fill: 'rgba(255,255,255,0.3)', fontWeight: 700 }}
+                      />
+                      <YAxis hide />
+                      <Tooltip 
+                        contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '9px' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#22d3ee" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#colorValue)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-              <motion.div 
-                whileHover={{ y: -4 }}
-                onClick={() => setCurrentView('recordings')}
-                className="p-8 glass rounded-3xl group cursor-pointer"
-              >
-                <div className="w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center mb-6 transition-all group-hover:bg-cyan-500 group-hover:text-black">
-                  <Monitor className="w-6 h-6" />
+              <div className="glass border border-white/5 rounded-[40px] p-8">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 mb-8">{t('dashboard.nodeStatus')}</h3>
+                <div className="space-y-6">
+                  {[
+                    { label: 'Edge Node Alpha', status: 'Healthy', val: 92 },
+                    { label: 'Satellite Orbital', status: 'Warning', val: 64 },
+                    { label: 'Local Mesh Hub', status: 'Healthy', val: 98 },
+                    { label: 'Quantum Relay', status: 'Syncing', val: 45 },
+                  ].map((node) => (
+                    <div key={node.label} className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-black uppercase tracking-tight">
+                        <span className="text-[#e2e8f0]">{node.label}</span>
+                        <span className={cn(
+                          node.status === 'Healthy' ? 'text-emerald-400' : 
+                          node.status === 'Warning' ? 'text-amber-400' : 'text-cyan-400'
+                        )}>{node.status}</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          className={cn("h-full", 
+                            node.status === 'Healthy' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]' : 
+                            node.status === 'Warning' ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]' : 'bg-cyan-400'
+                          )}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${node.val}%` }}
+                          transition={{ duration: 1, ease: 'easeOut' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-xl font-black mb-2 text-white uppercase tracking-tight">{t('dashboard.vault')}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed uppercase tracking-widest">Access AES-256 encrypted media repository.</p>
-              </motion.div>
+                <div className="mt-12 p-6 glass border border-cyan-400/10 rounded-3xl bg-cyan-400/5">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Network Load</div>
+                  <div className="text-2xl font-black text-white italic">OPTIMAL.</div>
+                </div>
+              </div>
             </div>
 
             {/* Recent Activities */}
-            <div className="glass rounded-3xl overflow-hidden border border-white/5">
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Telemetry Log</h2>
-                <button className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">Export .LOG</button>
+            <div className="glass rounded-[40px] overflow-hidden border border-white/5">
+              <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/2">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">{t('dashboard.recentActivity')}</h2>
+                <div className="flex gap-4">
+                  <button className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">EXPORT_TELEMETRY</button>
+                  <button className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">CLEAR_BUFFER</button>
+                </div>
               </div>
               <div className="divide-y divide-white/5">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-6 flex items-center justify-between hover:bg-cyan-500/5 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center font-mono font-bold text-cyan-400 text-xs">
-                        {i < 10 ? `0${i}` : i}
+                {[
+                  { title: 'System Handshake: PROTOCOL_GCM', id: '0x8892...FF', time: '12:44:12', user: 'Admin' },
+                  { title: 'Shard Encryption: AES_256', id: '0xBC12...01', time: '12:40:05', user: 'System' },
+                  { title: 'Ingestion Pulse: NODE_HUB_01', id: '0x229D...EE', time: '12:38:55', user: 'Edge_4' }
+                ].map((log, i) => (
+                  <div key={i} className="p-8 flex items-center justify-between hover:bg-white/2 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 rounded-2xl bg-cyan-400/5 border border-cyan-400/20 flex items-center justify-center font-mono font-bold text-cyan-400 text-xs shadow-inner">
+                        {i + 1}
                       </div>
                       <div>
-                        <div className="font-bold text-sm tracking-tight group-hover:text-cyan-400 transition-colors uppercase">System Sync: ALPHA_{i*2}</div>
-                        <div className="text-[10px] font-mono text-slate-600 mt-0.5">PEER_ID: 0x8892...{i}ff • UPTIME: 02:44:12</div>
+                        <div className="font-bold text-sm tracking-tight text-white group-hover:text-cyan-400 transition-colors uppercase mb-1">{log.title}</div>
+                        <div className="text-[10px] font-mono text-slate-600 tracking-tighter uppercase">{log.id} • {log.user}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-[10px] font-mono text-cyan-500/50">SECURE</div>
-                      <button className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all">
-                        <MessageSquare className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center gap-8">
+                      <div className="text-[10px] font-mono text-slate-400 tabular-nums">{log.time}</div>
+                      <div className="px-4 py-2 rounded-xl bg-cyan-400 text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all">
+                        Details
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -242,6 +340,14 @@ export default function Dashboard() {
             active={currentView === 'settings'} 
             onClick={() => setCurrentView('settings')}
           />
+          {userData?.role === 'admin' && (
+            <SidebarItem 
+              icon={Shield} 
+              label={t('dashboard.mgmt')} 
+              active={currentView === 'management'} 
+              onClick={() => setCurrentView('management')}
+            />
+          )}
         </nav>
 
         <div className="pt-6 border-t border-white/5 mt-auto">
